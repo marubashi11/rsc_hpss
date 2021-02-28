@@ -1,0 +1,94 @@
+<<卒論で使用したコード>>
+以下の順番で実行.
+
+[matlab] equalization.m:
+  音量正規化.
+
+[python/make_images] wavefile_adjustment_cycle.py:
+  呼吸周期ごとにデータ分割 -> クラスごとにフォルダ分けして保存.
+
+[python/make_images] train-test_split.py:
+  交差検証のためのデータセット作成.
+  全データを {test:train = 1:4} の割合でダブりなく振り分け, 5回分のデータセットを作成.
+
+[python/make_images] librosa_hpss.py:
+  呼吸音データからスペクトログラム画像を作成 -> 調波打楽器音分離(HPSS)により分離したスペクトログラムを作成し, 別々のフォルダに保存.
+  分離前(O), H成分(H), P成分(P)の3種類の画像を保存.
+
+[python/CNN/train_and_test] cnn_train.py, cnn_test.py:
+  CNN単体の学習とテスト. CNNは画像の種類ごとに個別に学習.
+
+[python/CNN/train_and_test] save_features_for_clf.py:
+  学習済みCNNに学習/テストデータを入力 -> そのGAP層出力(=CNN特徴量)をデータファイルとして保存.
+  特徴量は {画像3種類 × train/test} で計6回作成.
+
+[python/CNN/train_and_test] clf_train_feature.py:
+  保存したCNN特徴量を使用し, 分類器の学習を行う.
+  分類器にはO, H, Pの3種類の画像のCNN特徴量を同時入力.
+
+[python/CNN/train_and_test] clf_test_feature.py:
+  保存したCNN特徴量を使用し, 分類器のテストを行う.
+
+
+<<その他のコード>>
+
+[python/make_images] wavefile_adjustment_shift.py:
+  秒数指定でデータ分割 + クラスごとにフォルダ分けして保存.(卒論では不使用)
+
+[python/make_images] custom_win_hpss.py:
+  H成分とP成分で窓幅を変えてスペクトログラム作成.
+  H成分は窓幅大きめ, P成分は窓幅小さめの方が特徴を絞りこめると考えて試験的に作成したコード.
+  期待するほどの効果は得られなかったためボツ.
+
+[python/CNN/AI_structure] CNN_structure.py:
+  CNNの構造定義用. 卒論ではVGG16_customを使用(通常のVGG16は重すぎて動かせなかった).
+
+[python/CNN/train_and_test] clf_train_and_test_single.py:
+  1種類のスペクトログラムのCNN特徴量のみを用い, 分類器の学習およびテストを行う.
+  卒論提案手法との比較用.
+
+[python/CNN/train_and_test] cnn_mi_test.py, cnn_mi_train.py:
+  3種類の画像をCNNに同時入力する場合のCNN学習/テスト.
+  3つのCNNを個別に訓練してSVMに同時入力するよりも, 1つのCNNに同時入力する方が学習の最適化が行えるのではないか, という助言を頂いたため, 卒論提出後に試験的に作成.
+
+[python/CNN/train_and_test] save_mi_features_for_clf.py:
+  3種類の画像をCNNに同時入力した場合のGAP層出力を保存.
+
+[python/CNN/train_and_test] clf_mi_train_feature.py, clf_mi_test_feature.py:
+  3種類の画像をCNNに同時入力した場合の分類器の学習/テスト.
+
+[python/CNN/train_and_test] read_f_list.py:
+  clf_test_feature.py内で作成した, 分類失敗リスト(f_list.txt)を読み込むだけのコード.
+  clf_test_feature.pyで正常に読み込めない変なリスト作成を行ってしまったため, このような二度手間なコードを作成した.
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+<<ディレクトリ構造>>
+音声/画像データを格納するディレクトリの構造は以下の通り.
+
+dataset_cycle(呼吸周期ごとに分割したデータを格納.)
+              - dataset1(5分割交差検証の1回目データセット.)
+                         - model(CNN/SVMの構造, 特徴量, 重みを格納.)
+                         - test(テスト用データを格納.)
+                                - audio(呼吸音データをクラスごとに格納. スペクトログラム生成に使用.)
+                                        - crackle
+                                        - crackle_wheeze
+                                        - normal
+                                        - wheeze
+                                - image(生成した各スペクトログラム画像を格納.)
+                                        - H(H成分スペクトログラム, 窓幅0.04[s].)
+                                            - crackle
+                                            - crackle_wheeze
+                                            - normal
+                                            - wheeze
+                                        - H~(H成分スペクトログラム, 窓幅0.064[s].)
+                                        - O(分離前スペクトログラム, 窓幅0.04[s].)
+                                        - O~(分離前スペクトログラム, 窓幅0.064[s].)
+                                        - P(P成分スペクトログラム, 窓幅0.04[s].)
+                                        - P~(P成分スペクトログラム, 窓幅0.064[s].)
+                         - train(学習用データを格納. ディレクトリ構造はtestと同じ.)
+              - dataset2
+              - dataset3
+              - dataset4
+              - dataset5
